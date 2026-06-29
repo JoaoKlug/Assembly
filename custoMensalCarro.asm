@@ -1,43 +1,62 @@
 segment .data
-    ; --- Strings de Formatação para printf e scanf ---
-    fmt_in_num  dq "%lld", 0         ; Para ler inteiros 64-bits
-    fmt_in_str  dq "%s", 0           ; Para ler strings (nomes sem espaço)
-    fmt_out_msg dq "%s", 10, 0       ; Para imprimir mensagens com quebra de linha
-    fmt_out_res dq "%s %s: R$ %lld", 10, 0 ; Para imprimir os resultados finais
+    ; --- Strings de Formatação Básica ---
+    fmt_in_num  dq "%lld", 0
+    fmt_in_str  dq "%s", 0
+    fmt_out_msg dq "%s", 0          ; Modificado para não pular linha automaticamente
+    fmt_out_res dq " -> %s | CUSTO MENSAL TOTAL: R$ %lld", 10, 0
 
-    ; --- Textos dos Prompts ---
-    p_km        db "Km mensal media: ", 0
-    p_gas       db "Preco da gasolina (R$): ", 0
+    ; --- Textos de Cabeçalho e Introdução ---
+    header      db "========================================================", 10
+                db "         COMPARADOR DE CUSTO MENSAL DE VEICULOS         ", 10
+                db "========================================================", 10
+                db "Bem-vindo! Este programa calcula qual carro e mais barato", 10
+                db "de manter por mes, considerando uso, IPVA, seguro e FIPE.", 10, 10
+                db "REGRAS DE ENTRADA:", 10
+                db "1. Nomes dos carros: Nao use espacos (Ex: 'Palio', 'HB20').", 10
+                db "2. Valores: Digite apenas numeros inteiros (sem virgulas).", 10
+                db "========================================================", 10, 10, 0
+
+    ; --- Textos de Entrada ---
+    h_gerais    db "--- Informacoes Gerais ---", 10, 0
+    p_km        db "Distancia percorrida no mes (km): ", 0
+    p_gas       db "Preco do litro da gasolina (R$): ", 0
     
-    msg_c1      db "--- DADOS DO CARRO 1 ---", 0
-    msg_c2      db "--- DADOS DO CARRO 2 ---", 0
+    msg_c1      db 10, "--- Dados do 1o Carro ---", 10, 0
+    msg_c2      db 10, "--- Dados do 2o Carro ---", 10, 0
     
-    p_nome      db "Nome (sem espaco): ", 0
-    p_ipva      db "IPVA (R$): ", 0
-    p_seguro    db "Seguro (R$): ", 0
+    p_nome      db "Nome do carro: ", 0
+    p_ipva      db "Valor total do IPVA (R$): ", 0
+    p_seguro    db "Valor total do seguro (R$): ", 0
     p_auto      db "Autonomia (km/l): ", 0
-    p_fipe      db "Valor FIPE (R$): ", 0
+    p_fipe      db "Valor da tabela FIPE (R$): ", 0
 
-    ; --- Textos de Conclusão ---
-    res_str     db "Custo total do", 0
-    win1        db "=> O CARRO 1 eh mais barato!", 10, 0
-    win2        db "=> O CARRO 2 eh mais barato!", 10, 0
-    empate      db "=> Ambos tem o mesmo custo!", 10, 0
+    ; --- Textos de Resultados ---
+    h_res       db 10, "========================================================", 10
+                db "                  RESUMO DOS CUSTOS                     ", 10
+                db "========================================================", 10, 0
+
+    h_conc      db 10, "========================================================", 10
+                db "                      CONCLUSAO                         ", 10
+                db "========================================================", 10, 0
+
+    win_msg     db "=> O carro %s e mais barato de manter que o %s.", 10, 0
+    eco_msg     db "=> Economia mensal de: R$ %lld", 10, 0
+    emp_msg     db "=> Os carros %s e %s tem exatamente o mesmo custo mensal (R$ %lld).", 10, 0
+    
+    sep         db "========================================================", 10, 0
 
 segment .bss
-    ; --- Variáveis Globais (Memória não inicializada) ---
+    ; --- Variáveis Globais ---
     km          resq 1
     gas         resq 1
 
-    ; Variáveis do Carro 1 (resq = reserve quadword / 64-bits)
-    nome1       resb 50     ; 50 bytes para a string do nome
+    nome1       resb 50
     ipva1       resq 1
     seguro1     resq 1
     auto1       resq 1
     fipe1       resq 1
     total1      resq 1
 
-    ; Variáveis do Carro 2
     nome2       resb 50
     ipva2       resq 1
     seguro2     resq 1
@@ -51,11 +70,18 @@ segment .text
     extern scanf
 
 main:
-    push RBP                ; Alinha a pilha (convenção C)
+    push RBP
 
-    ; ==========================================
-    ; LEITURA DOS DADOS GERAIS
-    ; ==========================================
+    ; --- INTRODUÇÃO ---
+    mov RDI, header
+    mov RAX, 0
+    call printf
+
+    ; --- INFORMAÇÕES GERAIS ---
+    mov RDI, h_gerais
+    mov RAX, 0
+    call printf
+
     mov RDI, p_km
     mov RAX, 0
     call printf
@@ -72,15 +98,11 @@ main:
     mov RAX, 0
     call scanf
 
-    ; ==========================================
-    ; LEITURA CARRO 1
-    ; ==========================================
-    mov RDI, fmt_out_msg
-    mov RSI, msg_c1
+    ; --- DADOS CARRO 1 ---
+    mov RDI, msg_c1
     mov RAX, 0
     call printf
 
-    ; Nome 1
     mov RDI, p_nome
     mov RAX, 0
     call printf
@@ -89,7 +111,6 @@ main:
     mov RAX, 0
     call scanf
 
-    ; IPVA 1
     mov RDI, p_ipva
     mov RAX, 0
     call printf
@@ -98,7 +119,6 @@ main:
     mov RAX, 0
     call scanf
 
-    ; Seguro 1
     mov RDI, p_seguro
     mov RAX, 0
     call printf
@@ -107,7 +127,6 @@ main:
     mov RAX, 0
     call scanf
 
-    ; Autonomia 1
     mov RDI, p_auto
     mov RAX, 0
     call printf
@@ -116,7 +135,6 @@ main:
     mov RAX, 0
     call scanf
 
-    ; FIPE 1
     mov RDI, p_fipe
     mov RAX, 0
     call printf
@@ -125,11 +143,8 @@ main:
     mov RAX, 0
     call scanf
 
-    ; ==========================================
-    ; LEITURA CARRO 2 (Simplificada para brevidade)
-    ; ==========================================
-    mov RDI, fmt_out_msg
-    mov RSI, msg_c2
+    ; --- DADOS CARRO 2 ---
+    mov RDI, msg_c2
     mov RAX, 0
     call printf
 
@@ -173,49 +188,38 @@ main:
     mov RAX, 0
     call scanf
 
-    ; ==========================================
-    ; MATEMÁTICA: CARRO 1
-    ; ==========================================
-    mov RCX, 0              ; RCX será o nosso acumulador do Total 1
-
-    ; Gasolina = (km / auto1) * gas
+    ; --- MATEMÁTICA: CARRO 1 ---
+    mov RCX, 0              
     mov RAX, [km]
-    mov RDX, 0              ; Zera RDX antes da divisão
+    mov RDX, 0
     mov RBX, [auto1]
-    div RBX                 ; RAX = km / auto1
+    div RBX                 
     mov RBX, [gas]
-    mul RBX                 ; RAX = RAX * gas
-    add RCX, RAX            ; Adiciona ao total
+    mul RBX                 
+    add RCX, RAX            
 
-    ; IPVA = ipva1 / 12
     mov RAX, [ipva1]
     mov RDX, 0
     mov RBX, 12
     div RBX
     add RCX, RAX
 
-    ; Seguro = seguro1 / 12
     mov RAX, [seguro1]
     mov RDX, 0
     mov RBX, 12
     div RBX
     add RCX, RAX
 
-    ; FIPE = fipe1 / 60 (5 anos * 12 meses)
     mov RAX, [fipe1]
     mov RDX, 0
     mov RBX, 60
     div RBX
     add RCX, RAX
 
-    mov [total1], RCX       ; Salva o custo total do Carro 1
+    mov [total1], RCX       
 
-    ; ==========================================
-    ; MATEMÁTICA: CARRO 2
-    ; ==========================================
-    mov RCX, 0              ; RCX será o acumulador do Total 2
-
-    ; Gasolina = (km / auto2) * gas
+    ; --- MATEMÁTICA: CARRO 2 ---
+    mov RCX, 0              
     mov RAX, [km]
     mov RDX, 0
     mov RBX, [auto2]
@@ -224,73 +228,100 @@ main:
     mul RBX
     add RCX, RAX
 
-    ; IPVA = ipva2 / 12
     mov RAX, [ipva2]
     mov RDX, 0
     mov RBX, 12
     div RBX
     add RCX, RAX
 
-    ; Seguro = seguro2 / 12
     mov RAX, [seguro2]
     mov RDX, 0
     mov RBX, 12
     div RBX
     add RCX, RAX
 
-    ; FIPE = fipe2 / 60
     mov RAX, [fipe2]
     mov RDX, 0
     mov RBX, 60
     div RBX
     add RCX, RAX
 
-    mov [total2], RCX       ; Salva o custo total do Carro 2
+    mov [total2], RCX       
 
-    ; ==========================================
-    ; IMPRIMINDO RESULTADOS E COMPARANDO
-    ; ==========================================
-    ; Print Total Carro 1
-    mov RDI, fmt_out_res
-    mov RSI, res_str
-    mov RDX, nome1
-    mov RCX, [total1]
+    ; --- RESUMO DOS CUSTOS ---
+    mov RDI, h_res
     mov RAX, 0
     call printf
 
-    ; Print Total Carro 2
     mov RDI, fmt_out_res
-    mov RSI, res_str
-    mov RDX, nome2
-    mov RCX, [total2]
+    mov RSI, nome1
+    mov RDX, [total1]
     mov RAX, 0
     call printf
 
-    ; Comparação
+    mov RDI, fmt_out_res
+    mov RSI, nome2
+    mov RDX, [total2]
+    mov RAX, 0
+    call printf
+
+    ; --- CONCLUSÃO E LÓGICA IF/ELSE ---
+    mov RDI, h_conc
+    mov RAX, 0
+    call printf
+
     mov RAX, [total1]
     mov RBX, [total2]
     cmp RAX, RBX
-    jl carro1_vence         ; Se total1 < total2, pula para carro1_vence
-    jg carro2_vence         ; Se total1 > total2, pula para carro2_vence
+    jl carro1_vence
+    jg carro2_vence
 
-    ; Se chegar aqui, é empate
-    mov RDI, empate
+    ; Se chegar aqui (Empate)
+    mov RDI, emp_msg
+    mov RSI, nome1          ; %s = nome 1
+    mov RDX, nome2          ; %s = nome 2
+    mov RCX, [total1]       ; %lld = valor total
     mov RAX, 0
     call printf
     jmp fim
 
 carro1_vence:
-    mov RDI, win1
+    ; Print: O carro 1 é mais barato que o carro 2
+    mov RDI, win_msg
+    mov RSI, nome1          ; Vencedor
+    mov RDX, nome2          ; Perdedor
+    mov RAX, 0
+    call printf
+
+    ; Print: Economia mensal
+    mov RDI, eco_msg
+    mov RSI, [total2]
+    sub RSI, [total1]       ; RSI = total2 - total1
     mov RAX, 0
     call printf
     jmp fim
 
 carro2_vence:
-    mov RDI, win2
+    ; Print: O carro 2 é mais barato que o carro 1
+    mov RDI, win_msg
+    mov RSI, nome2          ; Vencedor
+    mov RDX, nome1          ; Perdedor
+    mov RAX, 0
+    call printf
+
+    ; Print: Economia mensal
+    mov RDI, eco_msg
+    mov RSI, [total1]
+    sub RSI, [total2]       ; RSI = total1 - total2
     mov RAX, 0
     call printf
 
 fim:
-    mov RAX, 0              ; Return 0
-    pop RBP                 ; Restaura a pilha
+    ; Fechar com o separador final
+    mov RDI, sep
+    mov RAX, 0
+    call printf
+
+    mov RAX, 0
+    pop RBP
     ret
